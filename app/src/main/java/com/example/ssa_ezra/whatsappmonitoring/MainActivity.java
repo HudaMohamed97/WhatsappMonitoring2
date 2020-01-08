@@ -10,27 +10,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.service.notification.StatusBarNotification;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.content.LocalBroadcastManager;
-import android.telephony.PhoneNumberUtils;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.View;
-import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,14 +28,11 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends AppCompatActivity {
     private static final String ENABLED_NOTIFICATION_LISTENERS = "enabled_notification_listeners";
     private static final String ACTION_NOTIFICATION_LISTENER_SETTINGS = "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS";
-
     private TextView tvMsg;
     private String title;
     private ReceiveBroadcastReceiver imageChangeBroadcastReceiver;
@@ -58,26 +42,7 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        tvMsg = (TextView) this.findViewById(R.id.image_change_explanation);
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+        tvMsg = this.findViewById(R.id.image_change_explanation);
 
         if (!isNotificationServiceEnabled()) {
             enableNotificationListenerAlertDialog = buildNotificationServiceAlertDialog();
@@ -124,8 +89,13 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onReceive(Context context, Intent intent) {
             int receivedNotificationCode = intent.getIntExtra("Notification Code", -1);
+            List<String> msgs = new ArrayList<String>();
+            msgs.add("Title: " + intent.getStringExtra(Intent.EXTRA_TITLE));
+            msgs.add("Text: " + intent.getStringExtra(Intent.EXTRA_TEXT));
+
             String packages = intent.getStringExtra("package");
             title = intent.getStringExtra("title");
+            String titleExtra = intent.getStringExtra("titleExtra");
             String text = intent.getStringExtra("text");
             if (text != null) {
                 if (!text.contains("new messages") && !text.contains("WhatsApp Web is currently active") && !text.contains("WhatsApp Web login")) {
@@ -136,13 +106,9 @@ public class MainActivity extends AppCompatActivity
                     DateFormat df = new SimpleDateFormat("ddMMyyyyHHmmssSSS");
                     String date = df.format(Calendar.getInstance().getTime());
 
-                    tvMsg.setText("Notification : " + receivedNotificationCode + "\nPackages : " + packages + "\nTitle : " + title + "\nText : " + text + "\nId : " + date + "\nandroid_id : " + android_id + "\ndevicemodel : " + devicemodel);
-                    try {
-                        Toast.makeText(context, "success", Toast.LENGTH_SHORT).show();
-                        sendMessae(title);
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
+                    tvMsg.setText("Notification : " + receivedNotificationCode + "\nPackages : "+titleExtra+"extraaa" + packages + "\nTitle : " + title + "\nText : " + text + "\nId : " + date + "\nandroid_id : " + android_id + "\ndevicemodel : " + devicemodel);
+                    Toast.makeText(context, "success", Toast.LENGTH_SHORT).show();
+                    sendMessae(title);
 
                 }
             }
@@ -175,7 +141,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -203,31 +169,6 @@ public class MainActivity extends AppCompatActivity
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    @SuppressWarnings("StatementWithEmptyBody")
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
-        }
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
     }
 
 
@@ -258,7 +199,7 @@ public class MainActivity extends AppCompatActivity
         return false;
     }
 
-    public void sendMessae(String smsNumber) throws FileNotFoundException {
+    public void sendMessae(String smsNumber) {
         PackageManager packageManager = getPackageManager();
         Intent i = new Intent(Intent.ACTION_VIEW);
         String url = null;
@@ -273,21 +214,6 @@ public class MainActivity extends AppCompatActivity
             startActivity(i);
         }
 
-
-
-       /* String whatsAppMessage = "Testing";
-        Uri conatct = Uri.parse("smsto:" + smsNumber);
-        Uri uri = Uri.parse("android.resource://com.example.ssa_ezra.whatsappmonitoring/drawable/back");
-        Intent intent = new Intent(Intent.ACTION_SENDTO, conatct);
-        //intent.setAction(Intent.ACTION_SENDTO,conatct);
-        intent.putExtra(Intent.EXTRA_TEXT, whatsAppMessage);
-        intent.setType("text/plain");
-        intent.putExtra(Intent.EXTRA_STREAM, uri);
-        intent.setType("image/jpeg");
-        intent.setPackage("com.whatsapp");
-        startActivity(intent);
-*/
     }
-
 
 }
